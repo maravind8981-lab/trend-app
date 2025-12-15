@@ -1,13 +1,12 @@
-FROM nginx:alpine
+FROM node:18-alpine
 
-# Remove default nginx website
-RUN rm -rf /usr/share/nginx/html/*
+WORKDIR /app
 
-# Copy your static site
-COPY dist/ /usr/share/nginx/html/
+COPY package*.json ./
+RUN npm install
 
-# Expose port 80 inside container
-EXPOSE 80
+COPY . .
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 3000
+
+CMD ["npm", "start"]
