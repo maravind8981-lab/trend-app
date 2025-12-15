@@ -2,15 +2,14 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = "aravindkumar18"
-        IMAGE_NAME = "trend-app"
-        IMAGE_TAG = "latest"
-        DOCKER_CREDENTIALS_ID = "dockerhub-creds"
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
+        DOCKER_IMAGE = "aravindkumar18/trend-app"
+        TAG = "latest"
     }
 
     stages {
 
-        stage('Checkout Code') {
+        stage('Clone Repo') {
             steps {
                 git branch: 'main',
                     url: 'https://github.com/maravind8981-lab/trend-app.git'
@@ -20,51 +19,25 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                  docker build -t $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG .
+                docker build -t $DOCKER_IMAGE:$TAG .
                 '''
             }
         }
 
         stage('DockerHub Login') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: DOCKER_CREDENTIALS_ID,
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
-                    sh '''
-                      echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                    '''
-                }
+                sh '''
+                echo "$DOCKERHUB_CREDENTIALS_PSW" | docker login -u "$DOCKERHUB_CREDENTIALS_USR" --password-stdin
+                '''
             }
         }
 
         stage('Push Image to DockerHub') {
             steps {
                 sh '''
-                  docker push $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG
+                docker push $DOCKER_IMAGE:$TAG
                 '''
             }
-        }
-
-        stage('Deploy to EKS') {
-            steps {
-                sh '''
-                  kubectl apply -f deployment.yaml
-                  kubectl apply -f service.yaml
-                '''
-            }
-        }
-    }
-
-    post {
-        success {
-            echo "✅ CI/CD Pipeline completed successfully!"
-        }
-        failure {
-            echo "❌ CI/CD Pipeline failed!"
         }
     }
 }
