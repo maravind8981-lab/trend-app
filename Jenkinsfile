@@ -27,7 +27,8 @@ pipeline {
         stage('DockerHub Login') {
             steps {
                 sh '''
-                echo "$DOCKERHUB_CREDENTIALS_PSW" | docker login -u "$DOCKERHUB_CREDENTIALS_USR" --password-stdin
+                echo "$DOCKERHUB_CREDENTIALS_PSW" | docker login \
+                -u "$DOCKERHUB_CREDENTIALS_USR" --password-stdin
                 '''
             }
         }
@@ -36,6 +37,16 @@ pipeline {
             steps {
                 sh '''
                 docker push $DOCKER_IMAGE:$TAG
+                '''
+            }
+        }
+
+        /* ✅ ADD DEPLOY STAGE HERE */
+        stage('Deploy to EKS') {
+            steps {
+                sh '''
+                kubectl apply -f deployment.yaml
+                kubectl apply -f service.yaml
                 '''
             }
         }
