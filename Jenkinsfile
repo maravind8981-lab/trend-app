@@ -1,38 +1,51 @@
 pipeline {
     agent any
 
-    stages {
-        stage('Clone Repo') {
-            steps {
-pipeline {
-    agent any
+    environment {
+        DOCKERHUB_USER = "aravindkumar18"
+        IMAGE_NAME = "trend-app"
+        IMAGE_TAG = "latest"
+        DOCKER_CREDENTIALS_ID = "dockerhub-creds"
+    }
 
     stages {
-        stage('Clone Repo') {
+
+        stage('Checkout Code') {
             steps {
-                git 'https://github.com/maravind8981-lab/trend-app'
+                git branch: 'main',
+                    url: 'https://github.com/maravind8981-lab/trend-app.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t trend-app .'
+                sh '''
+                  docker build -t $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG .
+                '''
             }
         }
 
-        stage('Push to DockerHub') {
+        stage('DockerHub Login') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: DOCKER_CREDENTIALS_ID,
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
                     sh '''
-                      docker tag trend-app $DOCKER_USER/trend-app:latest
-                      echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                      docker push $DOCKER_USER/trend-app:latest
+                      echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                     '''
                 }
+            }
+        }
+
+        stage('Push Image to DockerHub') {
+            steps {
+                sh '''
+                  docker push $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG
+                '''
             }
         }
 
@@ -43,6 +56,15 @@ pipeline {
                   kubectl apply -f service.yaml
                 '''
             }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ CI/CD Pipeline completed successfully!"
+        }
+        failure {
+            echo "❌ CI/CD Pipeline failed!"
         }
     }
 }
