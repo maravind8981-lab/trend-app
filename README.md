@@ -20,6 +20,9 @@
    - Deploys application to EKS using kubectl
 4. Application runs on Kubernetes
 5. Prometheus & Grafana monitor cluster and application
+   
+## Monitoring
+Cluster monitoring was implemented for the EKS cluster trend-app-cluster using Prometheus and Grafana. The monitoring stack was deployed via Helm and visualized using Grafana Kubernetes dashboards to monitor cluster, node, and pod metrics.
 
 # Setup Instructions
 
@@ -27,3 +30,5 @@
 ```bash
 git clone https://github.com/maravind8981-lab/trend-app
 cd trend-app
+
+
